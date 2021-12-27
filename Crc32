@@ -1,30 +1,61 @@
 // calculate CRC 32bit in hex of given string and return in Hexadecimal 
 
-var makeCRCTable = function(){
-    var c;
-    var crcTable = [];
-    for(var n =0; n < 256; n++){
-        c = n;
-        for(var k =0; k < 8; k++){
-            c = ((c&1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1));
-        }
-        crcTable[n] = c;
-    }
-    return crcTable;
-}
+//////////////////////////////
+function Utf8Encode(string) {
+	string = string.replace(/\r\n/g, "\n");
+	var utftext = "";
 
-// main method 
-var crc32 = function(str) {
-    var crcTable = window.crcTable || (window.crcTable = makeCRCTable());
-    var crc = 0 ^ (-1);
+	for (var n = 0; n < string.length; n++) {
+		var c = string.charCodeAt(n);
+		if (c < 128) {
+			utftext += String.fromCharCode(c);
+		} else if ((c > 127) && (c < 2048)) {
+			utftext += String.fromCharCode((c >> 6) | 192);
+			utftext += String.fromCharCode((c & 63) | 128);
+		} else {
+			utftext += String.fromCharCode((c >> 12) | 224);
+			utftext += String.fromCharCode(((c >> 6) & 63) | 128);
+			utftext += String.fromCharCode((c & 63) | 128);
+		}
+	}
+	return utftext;
+};
 
-    for (var i = 0; i < str.length; i++ ) {
-        crc = (crc >>> 8) ^ crcTable[(crc ^ str.charCodeAt(i)) & 0xFF];
-    }
+////////////////////////////////
+; (function ($, window, document, undefined) {
+	$.DALcrcHex = function (str,csrf) {
+		let result = '';
+		str = str ?? '';
+		if (typeof csrf == 'string') {			
+			str = str + csrf;    ///CRC(params+FormOwnerCsrf)
+		}
+		if (str == null && str === '')
+			return '00000000';
+		str = Utf8Encode(str);
+		var crcTable = window.crcTable || (window.crcTable = function (s) {
+			let c;
+			let crcTbl = [];
+			for (var n = 0; n < 256; n++) {
+				c = n;
+				for (var k = 0; k < 8; k++) {
+					c = ((c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1));
+				}
+				crcTbl[n] = c;
+			}
+			return crcTbl;
+		}());
+		let crc = 0 ^ (-1);
+		for (var i = 0; i < str.length; i++) {
+			crc = (crc >>> 8) ^ crcTable[(crc ^ str.charCodeAt(i)) & 0xFF];
+		}
+		result = ((crc ^ (-1)) >>> 0).toString(16);
+		result = result === '0' ? '00000000' : result; 
 
-    return (crc ^ (-1)) >>> 0;
-}; 
+		return result+(csrf??''); 
+	};
+})(jQuery, window, document);
 
 
-// test 
-crc32('saber').toString(16);
+///////////////////////////////test
+//crc32('saber').toString(16);
+////////////////////////////////
