@@ -1,4 +1,4 @@
-// calculate CRC 32bit in hex of given string and return in Hexadecimal 
+// calculate CRC 32bit Unicode Support (UTF8) in hex of given string and return in Hexadecimal 
 
 //////////////////////////////
 function Utf8Encode(string) {
